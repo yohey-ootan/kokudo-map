@@ -1,0 +1,106 @@
+# 全国の道路データを地図タイルに変換して GitHub Pages に公開する
+#   - 毎月1回自動で実行（最新のOpenStreetMapデータに更新）
+#   - Actions タブの「Run workflow」で手動実行もできる
+name: 道路タイルを作成して公開
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 18 1 * *"   # 毎月2日 3:17（日本時間）
+  push:
+    branches: [main]
+    paths: ["web/**"]        # Webアプリだけ変えたときは、前回のタイルを使い回して公開
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: タイルを作り直すか判定
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then echo "tiles=reuse" >> $GITHUB_OUTPUT; else echo "tiles=build" >> $GITHUB_OUTPUT; fi
+
+      # ---------- タイルを作る ----------
+      - name: ツールをインストール
+        if: steps.mode.outputs.tiles == 'build'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev
+          pip install osmium
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          sudo make -C /tmp/tippecanoe install
+
+      - name: 日本のOpenStreetMapデータをダウンロード（約2GB）
+        if: steps.mode.outputs.tiles == 'build'
+        run: curl -L --fail --retry 3 -o japan.osm.pbf https://download.geofabrik.de/asia/japan-latest.osm.pbf
+
+      - name: 必要なデータだけに絞り込み
+        if: steps.mode.outputs.tiles == 'build'
+        run: |
+          osmium tags-filter japan.osm.pbf \
+            w/highway=motorway,trunk,primary,secondary,services,rest_area \
+            n/highway=services,rest_area \
+            r/route=road \
+            r/admin_level=4 \
+            nwr/amenity=fuel,charging_station,restaurant,food_court,fast_food,cafe,toilets,atm,shower \
+            nwr/shop nwr/tourism=information \
+            -o filtered.osm.pbf --overwrite
+          rm japan.osm.pbf
+          ls -lh filtered.osm.pbf
+
+      - name: 重用区間・起点終点・SA/PA設備などを計算
+        if: steps.mode.outputs.tiles == 'build'
+        run: |
+          mkdir -p site
+          python3 scripts/build.py filtered.osm.pbf roads.geojsonl site/index.json
+          ls -lh roads.geojsonl site/index.json
+
+      - name: 地図タイル（PMTiles）に変換
+        if: steps.mode.outputs.tiles == 'build'
+        run: |
+          tippecanoe -o site/japan-roads.pmtiles --force \
+            -Z5 -z14 --drop-densest-as-needed --simplification=4 \
+            --attribution='© OpenStreetMap contributors' \
+            roads.geojsonl
+          ls -lh site/japan-roads.pmtiles
+
+      # ---------- Webアプリだけ更新するときは、公開中のタイルを取ってくる ----------
+      - name: 公開中のタイルを再利用
+        if: steps.mode.outputs.tiles == 'reuse'
+        run: |
+          mkdir -p site
+          base="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          curl -L --fail -o site/japan-roads.pmtiles "$base/japan-roads.pmtiles" || echo "::warning::まだタイルがありません。Actionsで手動実行してください"
+          curl -L --fail -o site/index.json "$base/index.json" || true
+
+      # ---------- 公開 ----------
+      - name: Webアプリを配置
+        run: cp -r web/* site/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
