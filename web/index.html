@@ -23,7 +23,7 @@
   #map { position: absolute; inset: 0; }
   .panel { position: absolute; left: 12px; top: 12px; z-index: 2; background: var(--bg);
     border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 250px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.12); font-size: 13px; }
+    box-shadow: 0 2px 10px rgba(0,0,0,.12); font-size: 13px; max-height: calc(100vh - 24px); overflow-y: auto; }
   .panel h1 { font-size: 15px; margin: 0 0 8px; }
   .panel label { display: flex; align-items: center; gap: 8px; margin: 4px 0; cursor: pointer; }
   .sw { width: 22px; height: 5px; border-radius: 3px; display: inline-block; flex: none; }
@@ -35,6 +35,60 @@
   button { font: inherit; }
   .panel .btn { margin-top: 6px; width: 100%; padding: 6px; border: 1px solid var(--line);
     border-radius: 6px; background: var(--soft); font-size: 12px; cursor: pointer; color: var(--fg); }
+  /* パックマン */
+  #pacCanvas { position: absolute; inset: 0; z-index: 10; touch-action: none; }
+  #pacHud { position: absolute; inset: 0; z-index: 11; pointer-events: none; color: #fff; font-size: 13px; }
+  #pacScore { position: absolute; left: 12px; top: 10px; font-weight: 600; text-shadow: 0 1px 2px #000; }
+  #pacLives { position: absolute; left: 12px; top: 30px; color: #ffd43b; letter-spacing: 3px; }
+  #pacHud button { pointer-events: auto; position: absolute; top: 8px; width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.4); background: rgba(0,0,0,.4); color: #fff; font-size: 15px; cursor: pointer; }
+  #pacPause { right: 52px; } #pacQuit { right: 10px; }
+  #pacMsg { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: rgba(0,0,0,.65); padding: 10px 18px;
+    border-radius: 12px; font-size: 15px; font-weight: 600; text-align: center; transition: opacity .4s; opacity: 0; max-width: 85%; }
+  .pacBtns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .pacBtns button { pointer-events: auto; position: static !important; width: auto !important; height: auto !important;
+    border-radius: 18px !important; padding: 6px 14px; font-size: 13px !important; }
+  body.pacmode .panel, body.pacmode #focusChip, body.pacmode .maplibregl-ctrl-top-right { display: none; }
+  /* 訪問記録 */
+  .vpop { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .vbadge { background: #2b8a3e; color: #fff; border-radius: 10px; padding: 1px 8px; font-weight: 600; }
+  .vnone { color: var(--muted); }
+  .vopen { margin-left: auto; border: 0; background: #d9480f; color: #fff; border-radius: 14px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+  #visitSheet { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
+  #visitSheet[hidden], #photoViewer[hidden] { display: none; }
+  .sheetbox { background: var(--bg); width: min(520px, 100%); max-height: 88vh; overflow-y: auto; border-radius: 14px 14px 0 0; padding: 14px 16px 24px; box-sizing: border-box; }
+  .sheettop { display: flex; align-items: center; }
+  .sheettop h3 { margin: 0; font-size: 17px; flex: 1; }
+  .sheetclose { border: 0; background: var(--soft); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
+  .vsum { color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
+  #vform { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: var(--soft); border-radius: 10px; }
+  .vlab { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  #vform input[type=date], #vform textarea { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+  .vbtn { align-self: flex-start; border: 1px solid var(--line); background: var(--bg); border-radius: 16px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .vsave { border: 0; background: #d9480f; color: #fff; border-radius: 8px; padding: 9px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .vph { display: flex; flex-wrap: wrap; gap: 6px; }
+  .vph img { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+  .pend { position: relative; }
+  .pend button { position: absolute; top: -6px; right: -6px; border: 0; background: #1d2433; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; }
+  .vlist { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .vrec { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .vhead { display: flex; align-items: center; }
+  .vhead b { flex: 1; }
+  .vdel { border: 0; background: none; color: #c92a2a; font-size: 12px; cursor: pointer; }
+  .vcom { font-size: 13px; margin: 4px 0 6px; line-height: 1.5; }
+  #photoViewer { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.9); display: flex; align-items: center; justify-content: center; }
+  #photoViewer img { max-width: 100%; max-height: 100%; }
+  .rsum { font-size: 14px; margin: 4px 0; }
+  .rsum b { font-size: 22px; color: #d9480f; }
+  .rbar { height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  .rbar i { display: block; height: 100%; background: #d9480f; }
+  .vfilter { font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .vfilter label { margin: 0; gap: 3px; }
+  .rlist { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; }
+  .rrow { display: flex; justify-content: space-between; gap: 8px; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 7px 2px; text-align: left; cursor: pointer; font-size: 13px; color: var(--fg); }
+  .rrow small { color: var(--muted); white-space: nowrap; }
+  .offinfo { font-size: 12px; color: var(--muted); margin: 2px 0 4px; line-height: 1.5; }
+  .panel .btn.primary { background: var(--k1); border-color: var(--k1); color: #fff; }
   .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
   .tabs button { flex: 1; padding: 5px; border: 1px solid var(--line); border-radius: 6px;
     background: var(--bg); cursor: pointer; font-size: 12px; color: var(--muted); }
@@ -105,6 +159,7 @@
     <div class="tabs">
       <button data-tab="view" class="on">表示</button>
       <button data-tab="select">道路を選択<span class="badge" id="selcount" hidden></span></button>
+      <button data-tab="record">記録</button>
       <button data-tab="style">配色</button>
     </div>
 
@@ -122,6 +177,9 @@
       <label><input type="checkbox" id="overlap" checked><span style="width:28px;display:inline-flex;justify-content:center"><span style="width:6px;height:6px;border-radius:50%;background:#5b6577"></span></span>重用区間の端を表示</label>
       <label><input type="checkbox" id="labels" checked>路線番号の標識を表示</label>
       <label><input type="checkbox" id="names" checked>通り名・通称名を表示</label>
+      <button class="btn primary" id="pacStart">🎮 この画面でパックマン</button>
+      <h3>道路データの保存</h3>
+      <div id="offline"><div class="empty">確認中…</div></div>
       <h3>施設</h3>
       <label><input type="checkbox" id="showRest" checked><span class="ficon" style="background:#ffd43b;color:#1d2433;border:1.5px solid #1d2433;box-sizing:border-box">SA</span>サービスエリア・パーキングエリア</label>
       <label><input type="checkbox" id="showEki" checked><span class="ficon" style="background:#d9480f">駅</span>道の駅</label>
@@ -137,6 +195,8 @@
       </div>
       <div id="sellist"></div>
     </div>
+
+    <div id="tab-record" hidden></div>
 
     <div id="tab-style" hidden>
       <div class="presets">
@@ -161,8 +221,12 @@
 <script>
 // ===== 設定 =====
 // 事前に作った全国の道路タイル（GitHub Actionsで毎月更新）
-const TILES = new URL("japan-roads.pmtiles", location.href).href;
-const INDEX_URL = new URL("index.json", location.href).href;
+// Androidアプリでは、Actionsが "__DATA_BASE__" を公開ページのURLに置き換える
+const APP_DATA_BASE = "__DATA_BASE__";
+const IS_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const DATA_BASE = IS_APP && !APP_DATA_BASE.startsWith("__") ? APP_DATA_BASE : new URL("./", location.href).href;
+const TILES = new URL("japan-roads.pmtiles", DATA_BASE).href;
+const INDEX_URL = new URL("index.json", DATA_BASE).href;
 const CLASS_OF = { motorway: "kosoku", trunk: "kokudo", primary: "shuyo", secondary: "ippan" };
 const CLASS_NAME = { kosoku: "高速道路", senyo: "自動車専用道路", kokudo: "国道", shuyo: "主要地方道", ippan: "一般都道府県道" };
 // 表示カテゴリ（国道は重用数で4つに分ける）
@@ -240,22 +304,111 @@ const selected = new Set();   // "国道:16" のようなキー
 const statusEl = document.getElementById("status");
 const setStatus = t => statusEl.textContent = t;
 
+// ===== オフライン（端末に保存した道路データ） =====
+// 道路データ（PMTiles）と索引は、端末の「アプリ専用の保存領域」（OPFS）に保存する。
+// 保存していなければ、これまで通りネットから必要な部分だけ読む。
+const OFF = {
+  dir: null,
+  async root() {
+    if (!this.dir) this.dir = await navigator.storage.getDirectory();
+    return this.dir;
+  },
+  async file(name) {
+    try { return await (await (await this.root()).getFileHandle(name)).getFile(); } catch (e) { return null; }
+  },
+  async meta() {
+    const f = await this.file("meta.json");
+    try { return f ? JSON.parse(await f.text()) : null; } catch (e) { return null; }
+  },
+  async write(name, stream, onBytes) {
+    const h = await (await this.root()).getFileHandle(name, { create: true });
+    const w = await h.createWritable();
+    const reader = stream.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      await w.write(value);
+      onBytes && onBytes(value.byteLength);
+    }
+    await w.close();
+  },
+  async remove(name) { try { await (await this.root()).removeEntry(name); } catch (e) {} }
+};
+const offlineSupported = !!(navigator.storage && navigator.storage.getDirectory &&
+  window.FileSystemFileHandle && FileSystemFileHandle.prototype.createWritable);
+
+// アプリでは「別ウィンドウで開く」リンクを、端末のブラウザやGoogleマップアプリで開く
+if (IS_APP) document.addEventListener("click", e => {
+  const a = e.target.closest('a[target="_blank"]');
+  if (a && /^https?:/.test(a.href)) { e.preventDefault(); location.href = a.href; }
+});
+
+// 端末に保存したファイルから、必要な部分だけを読み出す（PMTilesの読み込み口）
+class LocalFileSource {
+  constructor(file) { this.file = file; }
+  getKey() { return "offline:" + this.file.name; }
+  async getBytes(offset, length) { return { data: await this.file.slice(offset, offset + length).arrayBuffer() }; }
+}
+// 道路タイル：保存してあれば端末のファイル、無ければネット（必要な部分だけ）
+let roadsPM = null;
+function getRoadsPM() {
+  if (!roadsPM) roadsPM = (async () => {
+    const meta = offlineSupported ? await OFF.meta() : null;
+    const f = meta && meta.complete ? await OFF.file("japan-roads.pmtiles") : null;
+    roadsSource = f ? "offline" : "online";
+    return new pmtiles.PMTiles(f ? new LocalFileSource(f) : TILES);
+  })();
+  return roadsPM;
+}
+let roadsSource = "online";
+maplibregl.addProtocol("roadtiles", async (params, abort) => {
+  const m = params.url.match(/(\d+)\/(\d+)\/(\d+)$/);
+  const pm = await getRoadsPM();
+  const t = await pm.getZxy(+m[1], +m[2], +m[3], abort.signal);
+  return { data: t ? t.data : new Uint8Array() };
+});
+
+// 背景地図・文字データ：一度読んだものは端末に保存し、電波が無くても表示できるようにする
+const TILE_CACHE = "map-tiles-v1", TILE_CACHE_MAX = 40000;
+let tileCacheCount = 0;
+maplibregl.addProtocol("cached", async (params, abort) => {
+  const url = "https://" + params.url.slice("cached://".length);
+  let cache = null;
+  try { cache = await caches.open(TILE_CACHE); } catch (e) {}
+  if (cache) {
+    const hit = await cache.match(url);
+    if (hit) return { data: await hit.arrayBuffer() };
+  }
+  const res = await fetch(url, { signal: abort.signal });
+  if (!res.ok) throw new Error(`${res.status} ${url}`);
+  const buf = await res.arrayBuffer();
+  if (cache) {
+    cache.put(url, new Response(buf.slice(0), { headers: { "Content-Type": res.headers.get("Content-Type") || "application/octet-stream" } })).catch(() => {});
+    if (++tileCacheCount % 500 === 0) trimTileCache(cache);
+  }
+  return { data: buf };
+});
+async function trimTileCache(cache) {   // 増えすぎたら古いものから消す
+  try {
+    const keys = await cache.keys();
+    if (keys.length > TILE_CACHE_MAX) for (const k of keys.slice(0, keys.length - TILE_CACHE_MAX * 0.8)) await cache.delete(k);
+  } catch (e) {}
+}
+
 // ===== 地図 =====
-const pmProtocol = new pmtiles.Protocol();
-maplibregl.addProtocol("pmtiles", pmProtocol.tile);
 const map = new maplibregl.Map({
   container: "map",
   style: {
     version: 8,
-    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+    glyphs: "cached://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
     sources: {
       pale: {
         type: "raster", tileSize: 256, maxzoom: 18,
-        tiles: ["https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"],
+        tiles: ["cached://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"],
         attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>'
       },
       roads: {
-        type: "vector", url: "pmtiles://" + TILES,
+        type: "vector", tiles: ["roadtiles://{z}/{x}/{y}"], minzoom: 5, maxzoom: 14,
         attribution: '道路データ © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
       }
     },
@@ -523,10 +676,27 @@ const gmap = q => `<a href="https://www.google.com/maps/search/?api=1&query=${en
 function updateEki() {
   if (!map.getSource("eki")) return;
   const need = [...facFilter];
+  let vm = new Map(), vf = "all";
+  try { vm = visitedMap; vf = visitFilter; } catch (e) {}   // 訪問記録（visits.js）
   map.getSource("eki").setData({ type: "FeatureCollection", features: MICHI
     .filter(d => d[2] != null && need.every(i => hasFac(d[4], i)))
+    .filter(d => vf === "all" || (vf === "visited") === vm.has(d[0]))
     .map(d => ({ type: "Feature", geometry: { type: "Point", coordinates: [d[3], d[2]] },
-      properties: { id: d[0], name: d[1], fac: d[4], addr: d[5], hours: d[6] } })) });
+      properties: { id: d[0], name: d[1], fac: d[4], addr: d[5], hours: d[6], v: vm.has(d[0]) } })) });
+}
+// 訪問済みの道の駅：オレンジの「駅」に緑のチェック
+function visitedIcon() {
+  const base = iconImage("駅", "#d9480f");
+  const cv = document.createElement("canvas"), g = cv.getContext("2d");
+  const pad = 5 * PR;
+  cv.width = base.width + pad; cv.height = base.height + pad;
+  g.putImageData(base, 0, pad);
+  const r = 6 * PR, cx = cv.width - r - 1, cy = r + 1;
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = "#2b8a3e"; g.fill();
+  g.lineWidth = 1.5 * PR; g.strokeStyle = "#fff"; g.stroke();
+  g.beginPath(); g.moveTo(cx - r * 0.45, cy); g.lineTo(cx - r * 0.1, cy + r * 0.4); g.lineTo(cx + r * 0.5, cy - r * 0.35);
+  g.lineWidth = 1.8 * PR; g.strokeStyle = "#fff"; g.lineCap = "round"; g.stroke();
+  return g.getImageData(0, 0, cv.width, cv.height);
 }
 // 案内標識（116系）風：SA・PAは高速の緑、道の駅は一般道の青
 function iconImage(text, bg, wCss = 22, fs = null, ink = null) {
@@ -544,6 +714,7 @@ function addFacilityLayers() {
   map.addImage("icon-SA", iconImage("SA", "#ffd43b", 22, null, "#1d2433"), { pixelRatio: PR });
   map.addImage("icon-PA", iconImage("PA", "#fff3bf", 22, null, "#1d2433"), { pixelRatio: PR });
   map.addImage("icon-eki", iconImage("駅", "#d9480f"), { pixelRatio: PR });
+  map.addImage("icon-eki-v", visitedIcon(), { pixelRatio: PR });
   map.addSource("eki", { type: "geojson", data: { type: "FeatureCollection", features: [] },
     attribution: '道の駅情報：<a href="https://www.michi-no-eki.jp/" target="_blank">全国「道の駅」連絡会</a>' });
   const textLayout = { "text-field": ["get", "name"], "text-font": ["Open Sans Semibold"], "text-size": 11,
@@ -555,7 +726,7 @@ function addFacilityLayers() {
               "text-size": ["step", ["zoom"], 0, 11, 11] },
     paint: textPaint });
   map.addLayer({ id: "eki", type: "symbol", source: "eki", minzoom: 6,
-    layout: { "icon-image": "icon-eki", "icon-size": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 10, 1],
+    layout: { "icon-image": ["case", ["get", "v"], "icon-eki-v", "icon-eki"], "icon-size": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 10, 1],
               "icon-allow-overlap": true, ...textLayout, "text-size": ["step", ["zoom"], 0, 10, 11] },
     paint: textPaint });
   map.on("click", "eki", e => {
@@ -566,7 +737,7 @@ function addFacilityLayers() {
       `<div class="fac">${tiles}</div>` +
       (p.hours ? `<div style="font-size:12px">営業時間：${esc(p.hours)}</div>` : "") +
       `<a href="https://www.michi-no-eki.jp/stations/views/${p.id}" target="_blank" rel="noopener">公式ページを開く</a>　` +
-      gmap("道の駅 " + p.name) + `</div>`
+      gmap("道の駅 " + p.name) + visitPopupHTML(p.id) + `</div>`
     ).addTo(map);
   });
   map.on("click", "rest", e => {
@@ -668,11 +839,88 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && selected.s
 let INDEX = { groups: {} };
 async function loadIndex() {
   try {
-    INDEX = await (await fetch(INDEX_URL)).json();
+    const meta = offlineSupported ? await OFF.meta() : null;
+    const f = meta && meta.complete ? await OFF.file("index.json") : null;
+    INDEX = f ? JSON.parse(await f.text()) : await (await fetch(INDEX_URL)).json();
     setStatus(`データ更新日：${INDEX.built}（OpenStreetMap）`);
   } catch (e) { setStatus("索引を読み込めませんでした（地図の表示はできます）"); }
   renderSelectList();
+  checkOffline(true);
 }
+
+// ===== 道路データのダウンロード・更新 =====
+const offEl = () => document.getElementById("offline");
+const fmtMB = b => (b / 1048576).toFixed(0) + "MB";
+let remoteInfo = null;   // { built, size }
+async function fetchRemoteInfo() {
+  const idx = await (await fetch(INDEX_URL, { cache: "no-store" })).json();
+  let size = 0;
+  try { size = +(await fetch(TILES, { method: "HEAD", cache: "no-store" })).headers.get("Content-Length") || 0; } catch (e) {}
+  return { built: idx.built, size };
+}
+async function checkOffline(first) {
+  const el = offEl();
+  if (!offlineSupported) { el.innerHTML = `<div class="empty">この端末では道路データを保存できません（ネットから表示します）</div>`; return; }
+  const meta = await OFF.meta();
+  try { remoteInfo = await fetchRemoteInfo(); } catch (e) { remoteInfo = null; }
+  let html = "";
+  if (meta && meta.complete) {
+    html = `<div class="offinfo">端末に保存済み：${meta.built}（${fmtMB(meta.size)}）<br>${roadsSource === "offline" ? "電波が無くても道路を表示できます" : ""}</div>`;
+    if (remoteInfo && remoteInfo.built > meta.built)
+      html += `<button class="btn primary" data-off="download">新しいデータ（${remoteInfo.built}）に更新${remoteInfo.size ? "・" + fmtMB(remoteInfo.size) : ""}</button>`;
+    html += `<button class="btn" data-off="delete">保存した道路データを削除</button>`;
+  } else {
+    html = `<div class="offinfo">道路データは毎回ネットから読み込んでいます。保存すると速くなり、電波が無くても表示できます。</div>` +
+      (remoteInfo ? `<button class="btn primary" data-off="download">道路データを保存${remoteInfo.size ? "（" + fmtMB(remoteInfo.size) + "・Wi-Fi推奨）" : ""}</button>` : "");
+  }
+  html += `<button class="btn" data-off="clearcache">保存した背景地図を削除</button>`;
+  el.innerHTML = html;
+  // アプリでは初回起動時に保存を提案する
+  if (first && IS_APP && !(meta && meta.complete) && remoteInfo && !localStorage.getItem("offlineAsked")) {
+    try { localStorage.setItem("offlineAsked", "1"); } catch (e) {}
+    if (confirm(`道路データ（${remoteInfo.size ? fmtMB(remoteInfo.size) : "約100〜300MB"}）を端末に保存しますか？\n保存すると表示が速くなり、電波が無くても道路を表示できます。\nWi-Fiでの保存をおすすめします。`)) downloadOffline();
+  }
+}
+async function downloadOffline() {
+  const el = offEl();
+  try {
+    el.innerHTML = `<div class="offinfo">準備中…</div><progress id="offprog" max="1" value="0" style="width:100%"></progress>`;
+    try { await navigator.storage.persist(); } catch (e) {}   // 端末の容量が少なくなっても消されにくくする
+    const info = remoteInfo || await fetchRemoteInfo();
+    await OFF.write("meta.json", new Blob([JSON.stringify({ complete: false })]).stream());
+    const idxRes = await fetch(INDEX_URL, { cache: "no-store" });
+    await OFF.write("index.json", idxRes.body);
+    const res = await fetch(TILES, { cache: "no-store" });
+    if (!res.ok) throw new Error("download " + res.status);
+    const total = +res.headers.get("Content-Length") || info.size || 0;
+    let got = 0;
+    const prog = document.getElementById("offprog");
+    await OFF.write("japan-roads.pmtiles", res.body, n => {
+      got += n;
+      if (total) { prog.value = got / total; }
+      el.querySelector(".offinfo").textContent = `道路データを保存中… ${fmtMB(got)}${total ? " / " + fmtMB(total) : ""}`;
+    });
+    await OFF.write("meta.json", new Blob([JSON.stringify({ complete: true, built: info.built, size: got })]).stream());
+    el.innerHTML = `<div class="offinfo">保存しました。切り替えのため再読み込みします…</div>`;
+    setTimeout(() => location.reload(), 800);
+  } catch (e) {
+    console.error(e);
+    await OFF.remove("meta.json");
+    el.innerHTML = `<div class="offinfo">保存できませんでした（${esc(e.message || e)}）。空き容量と電波を確認して、もう一度お試しください。</div>`;
+    setTimeout(() => checkOffline(false), 4000);
+  }
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-off]");
+  if (!b) return;
+  const act = b.dataset.off;
+  if (act === "download") downloadOffline();
+  if (act === "delete" && confirm("保存した道路データを削除しますか？（ネットから読む方式に戻ります）")) {
+    for (const n of ["meta.json", "japan-roads.pmtiles", "index.json"]) await OFF.remove(n);
+    location.reload();
+  }
+  if (act === "clearcache") { try { await caches.delete(TILE_CACHE); } catch (e) {} b.textContent = "背景地図を削除しました"; }
+});
 // 今の画面に見えている道路の keys
 function visibleKeys() {
   const set = new Set();
@@ -743,7 +991,7 @@ function updateSelection() {
 // ===== UI =====
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
   document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  for (const t of ["view", "select", "style"]) document.getElementById("tab-" + t).hidden = b.dataset.tab !== t;
+  for (const t of ["view", "select", "record", "style"]) document.getElementById("tab-" + t).hidden = b.dataset.tab !== t;
   if (b.dataset.tab === "select") renderSelectList();
 }));
 document.querySelectorAll("input[data-cls]").forEach(cb => cb.addEventListener("change", () => {
@@ -825,10 +1073,12 @@ renderStyleRows();
 
 function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 // アプリとしてインストールできるように Service Worker を登録
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && !IS_APP) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 </script>
+<script src="visits.js"></script>
+<script src="pacman.js"></script>
 </body>
 </html>

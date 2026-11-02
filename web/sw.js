@@ -1,9 +1,9 @@
 // アプリとしてインストールしたときに使う Service Worker
 //  - アプリ本体とライブラリは保存しておき、電波が弱くてもすぐ起動できるようにする
 //  - 地図タイル（PMTiles）は部分読み込みなので保存せず、そのままネットから読む
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
-const SHELL_FILES = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+const SHELL_FILES = ["./", "index.html", "visits.js", "pacman.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
@@ -11,7 +11,7 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== "libs").map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k.startsWith("shell-") && k !== SHELL).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
