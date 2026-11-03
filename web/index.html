@@ -43,12 +43,24 @@
   #pacHud button { pointer-events: auto; position: absolute; top: 8px; width: 34px; height: 34px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,.4); background: rgba(0,0,0,.4); color: #fff; font-size: 15px; cursor: pointer; }
   #pacPause { right: 52px; } #pacQuit { right: 10px; }
-  #pacMsg { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: rgba(0,0,0,.65); padding: 10px 18px;
+  #pacMsg { white-space: pre-line; position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: rgba(0,0,0,.65); padding: 10px 18px;
     border-radius: 12px; font-size: 15px; font-weight: 600; text-align: center; transition: opacity .4s; opacity: 0; max-width: 85%; }
   .pacBtns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
   .pacBtns button { pointer-events: auto; position: static !important; width: auto !important; height: auto !important;
     border-radius: 18px !important; padding: 6px 14px; font-size: 13px !important; }
   body.pacmode .panel, body.pacmode #focusChip, body.pacmode .maplibregl-ctrl-top-right { display: none; }
+  #pacPadToggle { right: 94px; }
+  #pacHud button { top: calc(8px + env(safe-area-inset-top)); }
+  #pacScore { top: calc(10px + env(safe-area-inset-top)); } #pacLives { top: calc(30px + env(safe-area-inset-top)); }
+  /* 十字ボタン（画面下の真ん中。押しやすい大きさ） */
+  #pacPad { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); width: 168px; height: 168px;
+    margin-left: -84px; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #pacPad[hidden] { display: none; }
+  #pacPad button { position: absolute !important; top: auto; width: 58px !important; height: 58px !important; border-radius: 14px !important;
+    background: rgba(255,255,255,.16) !important; border: 1px solid rgba(255,255,255,.35) !important; font-size: 20px !important; }
+  #pacPad button.on { background: rgba(255,212,59,.6) !important; }
+  #pacPad .up { left: 55px; top: 0 !important; } #pacPad .down { left: 55px; top: 110px !important; }
+  #pacPad .left { left: 0; top: 55px !important; } #pacPad .right { left: 110px; top: 55px !important; }
   /* 訪問記録 */
   .vpop { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
   .vbadge { background: #2b8a3e; color: #fff; border-radius: 10px; padding: 1px 8px; font-weight: 600; }
@@ -110,13 +122,33 @@
   .presets { display: flex; gap: 6px; margin-bottom: 6px; }
   .presets .btn { margin-top: 0; }
   svg.sw { width: 28px; height: 10px; flex: none; vertical-align: middle; }
+  .phead { display: flex; align-items: center; }
+  .phead h1 { flex: 1; margin: 0 0 8px; }
   #toggle { display: none; }
+  body { overscroll-behavior: none; }
+  /* ----- スマホ：下から出るシート。見出しは常に表示し、中身だけスクロール ----- */
   @media (max-width: 600px) {
-    .panel { left: 8px; right: 8px; top: auto; bottom: 24px; width: auto; }
+    .panel { left: 0; right: 0; top: auto; bottom: 0; width: auto; padding: 0; border-radius: 14px 14px 0 0;
+      max-height: 62vh; display: flex; flex-direction: column; overflow: hidden; border-bottom: 0; }
+    .phead { flex: none; padding: 14px 12px 8px 16px; position: relative; cursor: pointer; touch-action: none; }
+    .phead::before { content: ""; position: absolute; top: 5px; left: 50%; width: 40px; height: 4px; margin-left: -20px;
+      border-radius: 2px; background: var(--line); }
+    .phead h1 { margin: 0; font-size: 16px; }
+    #toggle { display: block; min-width: 44px; height: 36px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--soft); font-size: 14px; color: var(--fg); }
+    .panel .body { flex: 1; overflow-y: auto; padding: 0 14px calc(14px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
     .panel.collapsed .body { display: none; }
-    #toggle { display: block; position: absolute; right: 10px; top: 8px; width: auto; margin: 0;
-      padding: 2px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--soft); }
-    #sellist { max-height: 180px; }
+    .panel.collapsed .phead { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+    .tabs { position: sticky; top: 0; z-index: 1; background: var(--bg); padding: 2px 0 6px; margin-bottom: 4px; }
+    .tabs button { padding: 9px 2px; font-size: 13px; }
+    .panel label { min-height: 34px; margin: 0; }
+    .panel input[type=checkbox], .panel input[type=radio] { width: 20px; height: 20px; }
+    .panel .btn { padding: 11px 6px; font-size: 13px; }
+    .chips button { padding: 6px 10px; font-size: 12px; }
+    #sellist { max-height: none; }
+    #sellist label { min-height: 32px; }
+    #q { padding: 10px; font-size: 16px; }   /* 16px以上だと入力時に勝手に拡大されない */
+    .maplibregl-ctrl-bottom-right { margin-bottom: 64px; }
   }
   .maplibregl-popup-content { font-size: 13px; line-height: 1.5; }
   #focusChip { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 3;
@@ -153,8 +185,10 @@
 <div id="map"></div>
 <div id="focusChip" hidden><span id="focusText"></span><button id="focusClose" aria-label="強調を解除">✕</button></div>
 <div class="panel" id="panel">
-  <button id="toggle">▼</button>
-  <h1>道路マップ</h1>
+  <div class="phead" id="phead">
+    <h1>道路マップ</h1>
+    <button id="toggle" aria-label="パネルを閉じる・開く">▼</button>
+  </div>
   <div class="body">
     <div class="tabs">
       <button data-tab="view" class="on">表示</button>
@@ -1011,10 +1045,30 @@ document.getElementById("labels").addEventListener("change", e => {
     map.setLayoutProperty("label-" + c, "visibility", on ? "visible" : "none");
   }
 });
-document.getElementById("toggle").addEventListener("click", e => {
-  const p = document.getElementById("panel");
-  p.classList.toggle("collapsed");
-  e.target.textContent = p.classList.contains("collapsed") ? "▲" : "▼";
+// パネルの開け閉め（スマホは見出しのどこを押しても切り替わる。上下にスワイプでも開け閉め）
+const panelEl = document.getElementById("panel");
+const isPhone = () => window.matchMedia("(max-width: 600px)").matches;
+function setPanel(open) {
+  panelEl.classList.toggle("collapsed", !open);
+  document.getElementById("toggle").textContent = open ? "▼" : "▲";
+}
+document.getElementById("phead").addEventListener("click", e => {
+  if (!isPhone() && e.target.id !== "toggle") return;
+  setPanel(panelEl.classList.contains("collapsed"));
+});
+let headY = null;
+document.getElementById("phead").addEventListener("touchstart", e => { headY = e.touches[0].clientY; }, { passive: true });
+document.getElementById("phead").addEventListener("touchend", e => {
+  if (headY === null) return;
+  const dy = e.changedTouches[0].clientY - headY; headY = null;
+  if (Math.abs(dy) > 30) { setPanel(dy < 0); e.preventDefault(); }
+});
+// スマホでは閉じた状態で始め、地図を動かし始めたら自動で閉じる
+if (isPhone()) setPanel(false);
+map.on("dragstart", () => { if (isPhone()) setPanel(false); });
+// 道路をたどる・ゲーム開始・記録を開くときも、地図が見えるように閉じる
+document.addEventListener("click", e => {
+  if (isPhone() && e.target.closest("#pacStart, [data-trace], [data-goto], #fit")) setPanel(false);
 });
 
 // ===== 配色 =====

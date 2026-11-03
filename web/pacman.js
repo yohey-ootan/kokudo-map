@@ -12,7 +12,11 @@ const Pac = (() => {
   let cv, g, W, H, dpr, raf = 0, last = 0, running = false, paused = false;
   let graph, dots, power, player, ghosts, state;
   let input = { x: 0, y: 0 };
-  const hiKey = "pacHiScore";
+  const hiKey = "pacHiScore4";   // 点数のつけ方を変えたので新しい記録として保存
+  // エサの点数：一般都道府県道10点・主要地方道20点・国道30点・自動車専用道路と高速道路40点
+  // （DOT_VALUE ×10。原作のエサ10点に合わせ、ほかの得点も原作どおり）
+  const DOT_VALUE = { ippan: 1, shuyo: 2, kokudo: 3, senyo: 4, kosoku: 4 };
+  const DOT_COLOR = { 1: "#f0c860", 2: "#7ee0a8", 3: "#8fb8ff", 4: "#e6e9f0" };
 
   // ---------- 迷路（グラフ）を作る ----------
   function buildGraph() {
@@ -107,17 +111,19 @@ const Pac = (() => {
         for (const d of grid.get(i + "," + j) || []) if (Math.hypot(d.x - x, d.y - y) < DOT_GAP * 0.8) return true;
       return false;
     };
-    const add = (x, y) => {
+    const add = (x, y, v) => {
       if (x < 8 || y < 8 || x > W - 8 || y > H - 8 || near(x, y)) return;
-      const d = { x, y, alive: true }; out.push(d);
+      const d = { x, y, v, alive: true }; out.push(d);
       const k = Math.floor(x / DOT_GAP) + "," + Math.floor(y / DOT_GAP);
       if (!grid.has(k)) grid.set(k, []); grid.get(k).push(d);
     };
-    for (const e of graph.edges) {
-      const a = graph.nodes[e.a], b = graph.nodes[e.b];
+    // 点数の高い道から置く（交差点のエサは高い方の点数になる）
+    const val = e => DOT_VALUE[e.cls] || 1;
+    for (const e of [...graph.edges].sort((p, q) => val(q) - val(p))) {
+      const a = graph.nodes[e.a], b = graph.nodes[e.b], v = val(e);
       if (!a.on) continue;
-      add(a.x, a.y);
-      for (let t = DOT_GAP; t < e.len; t += DOT_GAP) add(a.x + (b.x - a.x) * t / e.len, a.y + (b.y - a.y) * t / e.len);
+      add(a.x, a.y, v);
+      for (let t = DOT_GAP; t < e.len; t += DOT_GAP) add(a.x + (b.x - a.x) * t / e.len, a.y + (b.y - a.y) * t / e.len, v);
     }
     return out;
   }
@@ -190,7 +196,7 @@ const Pac = (() => {
     if (cand.length === 1 && !(input.x || input.y)) return cand[0];
     let best = -1, bs = -2;
     if (input.x || input.y) for (const ei of cand) { const s = dot(edgeDir(m.from, ei), input); if (s > bs) { bs = s; best = ei; } }
-    if (bs > 0.35) return best;
+    if (bs > 0.25) return best;   // 斜めの交差点でも曲がりやすいように少し甘め
     best = -1; bs = -2;
     for (const ei of cand) { const s = dot(edgeDir(m.from, ei), m.dir); if (s > bs) { bs = s; best = ei; } }
     return best;
@@ -239,21 +245,28 @@ const Pac = (() => {
     hud = document.createElement("div"); hud.id = "pacHud";
     hud.innerHTML = `<span id="pacScore"></span><span id="pacLives"></span>
       <button id="pacPause" aria-label="一時停止">⏸</button><button id="pacQuit" aria-label="やめる">✕</button>
+      <button id="pacPadToggle" aria-label="十字ボタンの表示切替">✛</button>
+      <div id="pacPad"${padOn ? "" : " hidden"}>
+        <button data-d="0,-1" class="up" aria-label="上">▲</button><button data-d="-1,0" class="left" aria-label="左">◀</button>
+        <button data-d="1,0" class="right" aria-label="右">▶</button><button data-d="0,1" class="down" aria-label="下">▼</button>
+      </div>
       <div id="pacMsg"></div>`;
     map.getContainer().appendChild(cv); map.getContainer().appendChild(hud);
     document.body.classList.add("pacmode");
     state = { score: 0, lives: 3, stage: 1, hi: +(localStorage.getItem(hiKey) || 0), combo: 0, frightT: 0, modeT: 0, scatter: true, home: 0 };
     newStage(true);
     running = true; paused = false; last = performance.now();
+    startW = W;
     raf = requestAnimationFrame(loop);
     bindInput(true);
+    keepAwake(true);
   }
   let hud;
   function newStage(first) {
     dots = placeDots();
     power = placePower();
     resetPositions();
-    if (!first) msg(`ステージ ${state.stage}`, 1500); else msg("スワイプか矢印キーで操作。道の駅・SA・PAがパワーエサです", 3200);
+    if (!first) msg(`ステージ ${state.stage}`, 1500); else msg("スワイプ・行きたい方向をタップ・十字ボタンで操作\nエサ：県道10・主要地方道20・国道30・高速/専用40点\n道の駅・SA・PAがパワーエサ", 4500);
   }
   function resetPositions() {
     const pn = nearestNode(W / 2, H / 2);
@@ -276,6 +289,7 @@ const Pac = (() => {
   }
   function stop() {
     running = false; cancelAnimationFrame(raf);
+    keepAwake(false);
     bindInput(false);
     cv && cv.remove(); hud && hud.remove(); cv = hud = null;
     document.body.classList.remove("pacmode");
@@ -311,12 +325,12 @@ const Pac = (() => {
     const p = pos(player.m);
 
     // エサ
-    for (const d of dots) if (d.alive && Math.abs(d.x - p.x) < 9 && Math.abs(d.y - p.y) < 9) { d.alive = false; state.score += 10; sfx("dot"); }
+    for (const d of dots) if (d.alive && Math.abs(d.x - p.x) < 9 && Math.abs(d.y - p.y) < 9) { d.alive = false; state.score += d.v * 10; sfx("dot"); }
     for (const pw of power) {
       if (!pw.alive) continue;
       const n = graph.nodes[pw.node];
       if (Math.hypot(n.x - p.x, n.y - p.y) < 11) {
-        pw.alive = false; state.score += 50; state.combo = 0;
+        pw.alive = false; state.score += 50; state.combo = 0; buzz(40);
         state.frightT = Math.max(3, 8 - state.stage * 0.6);
         ghosts.forEach(gh => { if (gh.mode === "chase" || gh.mode === "wait") { if (gh.mode === "chase") reverse(gh.m); gh.mode = gh.mode === "wait" ? "wait" : "fright"; } });
         msg(`${pw.name} でパワーアップ！`, 1600); sfx("power");
@@ -336,10 +350,10 @@ const Pac = (() => {
       const q = pos(gh.m);
       if (Math.hypot(q.x - p.x, q.y - p.y) < 11) {
         if (gh.mode === "fright") {
-          gh.mode = "eaten"; state.combo++; const pts = 200 * 2 ** (state.combo - 1); state.score += pts;
+          gh.mode = "eaten"; state.combo++; const pts = 200 * 2 ** (state.combo - 1); buzz(60); state.score += pts;
           msg(`国道${gh.ref}号をつかまえた！ +${pts}`, 1200); sfx("eat");
         } else if (gh.mode === "chase") {
-          state.lives--; player.dead = 1.6; sfx("die");
+          state.lives--; player.dead = 1.6; sfx("die"); buzz([120, 60, 200]);
           msg(state.lives > 0 ? `国道${gh.ref}号につかまった…` : "", 1500);
           return;
         }
@@ -382,8 +396,8 @@ const Pac = (() => {
     }
     g.globalAlpha = 1;
     // エサ
-    g.fillStyle = "#ffe8a3";
-    for (const d of dots) if (d.alive) { g.beginPath(); g.arc(d.x, d.y, 2.2, 0, 7); g.fill(); }
+    // エサ：点数が高いほど大きく、道の種類の色
+    for (const d of dots) if (d.alive) { g.fillStyle = DOT_COLOR[d.v]; g.beginPath(); g.arc(d.x, d.y, 1.6 + d.v * 0.45, 0, 7); g.fill(); }
     // パワーエサ（施設）
     const blink = Math.sin(time * 6) > -0.3;
     for (const pw of power) {
@@ -399,6 +413,7 @@ const Pac = (() => {
     for (const gh of ghosts) drawGhost(gh, time);
     // 自機
     drawPlayer();
+    drawWish();
   }
   function drawGhost(gh, time) {
     const q = pos(gh.m);
@@ -429,6 +444,15 @@ const Pac = (() => {
     g.fillStyle = "#ffd43b";
     g.beginPath(); g.moveTo(p.x, p.y); g.arc(p.x, p.y, r, ang + open, ang + Math.PI * 2 - open); g.closePath(); g.fill();
   }
+  // 予約中の向き（次の交差点で曲がる方向）を自機の前に小さな矢印で出す
+  function drawWish() {
+    if (!(input.x || input.y) || player.dead > 0 || dot(input, player.m.dir) > 0.9) return;
+    const p = pos(player.m), ax = p.x + input.x * 16, ay = p.y + input.y * 16, a = Math.atan2(input.y, input.x);
+    g.save(); g.translate(ax, ay); g.rotate(a);
+    g.fillStyle = "rgba(255,212,59,.85)";
+    g.beginPath(); g.moveTo(6, 0); g.lineTo(-3, -5); g.lineTo(-3, 5); g.closePath(); g.fill();
+    g.restore();
+  }
   let msgT = 0;
   function msg(text, ms) {
     const m = document.getElementById("pacMsg");
@@ -439,7 +463,8 @@ const Pac = (() => {
   }
 
   // ---------- 操作 ----------
-  let touch0 = null;
+  let touch0 = null, moved = false, startW = 0;
+  let padOn = (() => { try { const v = localStorage.getItem("pacPad"); return v ? v === "1" : matchMedia("(pointer: coarse)").matches; } catch (e) { return false; } })();
   const setDir = (x, y) => { const l = Math.hypot(x, y) || 1; input = { x: x / l, y: y / l }; };
   function onKey(e) {
     const k = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
@@ -447,27 +472,70 @@ const Pac = (() => {
     if (e.key === "Escape") stop();
     if (e.key === " " || e.key === "p") { paused = !paused; e.preventDefault(); }
   }
-  function onDown(e) { touch0 = { x: e.clientX, y: e.clientY }; e.preventDefault(); }
+  // スワイプ：指を動かした方向へ。指を離さずに動かし続けても向きを変えられる
+  function onDown(e) { touch0 = { x: e.clientX, y: e.clientY }; moved = false; e.preventDefault(); }
   function onMove(e) {
     if (!touch0) return;
     const dx = e.clientX - touch0.x, dy = e.clientY - touch0.y;
-    if (Math.hypot(dx, dy) > 18) { setDir(dx, dy); touch0 = { x: e.clientX, y: e.clientY }; }
+    if (Math.hypot(dx, dy) > 12) { setDir(dx, dy); touch0 = { x: e.clientX, y: e.clientY }; moved = true; }
     e.preventDefault();
   }
-  function onUp() { touch0 = null; }
+  // タップ：自機から見てタップした場所の方向へ
+  function onUp(e) {
+    if (touch0 && !moved && e && e.type === "pointerup") {
+      const rc = cv.getBoundingClientRect(), p = pos(player.m);
+      const dx = e.clientX - rc.left - p.x, dy = e.clientY - rc.top - p.y;
+      if (Math.hypot(dx, dy) > 14) setDir(dx, dy);
+    }
+    touch0 = null;
+  }
+  // 十字ボタン：押した瞬間に反応（指を離すのを待たない）
+  function onPad(e) {
+    const b = e.target.closest("[data-d]");
+    if (!b) return;
+    e.preventDefault();
+    setDir(...b.dataset.d.split(",").map(Number));
+    b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 120);
+  }
+  function buzz(pattern) { try { navigator.vibrate && navigator.vibrate(pattern); } catch (e) {} }
+  // 遊んでいる間は画面が暗くならないように
+  let wake = null;
+  async function keepAwake(on) {
+    try {
+      if (on && navigator.wakeLock) wake = await navigator.wakeLock.request("screen");
+      else if (wake) { wake.release(); wake = null; }
+    } catch (e) {}
+  }
+  // ほかのアプリに切り替えたら自動で一時停止
+  function onVisibility() {
+    if (document.hidden && running && !paused) { paused = true; const b = document.getElementById("pacPause"); if (b) b.textContent = "▶"; msg("一時停止中", 0); }
+    if (!document.hidden && running) keepAwake(true);
+  }
   function onClick(e) {
     if (e.target.id === "pacQuit" || e.target.id === "pacExit") stop();
     if (e.target.id === "pacPause") { paused = !paused; e.target.textContent = paused ? "▶" : "⏸"; msg(paused ? "一時停止中" : "", 0); }
     if (e.target.id === "pacRetry") { stop(); setTimeout(start, 50); }
+    if (e.target.id === "pacPadToggle") {
+      padOn = !padOn; try { localStorage.setItem("pacPad", padOn ? "1" : "0"); } catch (err) {}
+      document.getElementById("pacPad").hidden = !padOn;
+    }
   }
   function bindInput(on) {
     const f = on ? "addEventListener" : "removeEventListener";
     window[f]("keydown", onKey);
     document[f]("click", onClick);
     if (cv) { cv[f]("pointerdown", onDown); cv[f]("pointermove", onMove); cv[f]("pointerup", onUp); cv[f]("pointercancel", onUp); }
+    const pad = document.getElementById("pacPad");
+    if (pad) pad[f]("pointerdown", onPad);
     window[f]("resize", onResize);
+    document[f]("visibilitychange", onVisibility);
   }
-  function onResize() { if (running) { stop(); alert("画面の大きさが変わったので終了しました"); } }
+  // スマホはアドレスバーの出し入れで高さが少し変わるので、横幅が変わった（画面を回した）ときだけ終了する
+  function onResize() {
+    if (!running) return;
+    const w = map.getContainer().clientWidth;
+    if (Math.abs(w - startW) > 40) { stop(); alert("画面の向きが変わったので終了しました。もう一度始めてください"); }
+  }
 
   // ---------- 効果音 ----------
   let ac = null, lastDot = 0;
